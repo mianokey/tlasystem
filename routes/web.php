@@ -77,7 +77,7 @@ use Illuminate\Support\Facades\Session;
 */
 Auth::routes();
 Route::get('/', [AuthController::class, 'login']);
-Route::get('/', [AuthController::class, 'login']);
+Route::get('/', [Controller::class, 'index']);
 Route::get('school/registration', [SchoolController::class, 'registrationForm']);
 Route::post('schools/registration', [SchoolController::class, 'registration']);
 Route::post('contact', [Controller::class, 'contact']);
