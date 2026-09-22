@@ -183,6 +183,7 @@ class UserService
         ];
 
     }
+    
     public function updateStudentUser(
         $userID,
         $first_name,
@@ -208,6 +209,7 @@ class UserService
             'current_address'   => $current_address,
             'permanent_address' => $permanent_address,
             'gender'            => $gender,
+            'school_transport'  => $school_transport
         ];
 
         if ($image) {
@@ -286,7 +288,7 @@ class UserService
                 'fees_id' => $fee->fees_id,
                 'fees_type_id' => $fee->fees_type_id,
                 'amount' => $fee->amount,
-                
+                'balance' => $fee->amount
             ]);
 
             $total += $fee->amount;

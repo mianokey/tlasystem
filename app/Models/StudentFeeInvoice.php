@@ -23,6 +23,14 @@ protected $fillable = [
     'generated_by', 
 ];
 
+protected $casts = [
+    'due_date' => 'date',
+    'total_amount' => 'decimal:2',
+    'paid_amount' => 'decimal:2',
+    'balance' => 'decimal:2',
+];
+
+
 
     /*
     |--------------------------------------------------------------------------

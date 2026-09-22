@@ -31,7 +31,8 @@ use PDF;
 use Throwable;
 use TypeError;
 
-class StudentController extends Controller {
+class StudentController extends Controller
+{
     private StudentInterface $student;
     private UserInterface $user;
     private ClassSectionInterface $classSection;
@@ -42,7 +43,8 @@ class StudentController extends Controller {
     private SchoolSettingInterface $schoolSettings;
     private SubscriptionService $subscriptionService;
 
-    public function __construct(StudentInterface $student, UserInterface $user, ClassSectionInterface $classSection, FormFieldsInterface $formFields, SessionYearInterface $sessionYear, CachingService $cachingService, SubscriptionInterface $subscription, SchoolSettingInterface $schoolSettings, SubscriptionService $subscriptionService) {
+    public function __construct(StudentInterface $student, UserInterface $user, ClassSectionInterface $classSection, FormFieldsInterface $formFields, SessionYearInterface $sessionYear, CachingService $cachingService, SubscriptionInterface $subscription, SchoolSettingInterface $schoolSettings, SubscriptionService $subscriptionService)
+    {
         $this->student = $student;
         $this->user = $user;
         $this->classSection = $classSection;
@@ -54,7 +56,8 @@ class StudentController extends Controller {
         $this->subscriptionService = $subscriptionService;
     }
 
-    public function index() {
+    public function index()
+    {
         ResponseService::noPermissionThenRedirect('student-list');
         $class_sections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
         $extraFields = $this->formFields->defaultModel()->orderBy('rank')->get();
@@ -64,7 +67,8 @@ class StudentController extends Controller {
         return view('students.details', compact('class_sections', 'extraFields', 'sessionYears', 'features'));
     }
 
-    public function create() {
+    public function create()
+    {
         ResponseService::noPermissionThenRedirect('student-create');
         $class_sections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
         $sessionYear = $this->cache->getDefaultSessionYear();
@@ -76,7 +80,8 @@ class StudentController extends Controller {
         return view('students.create', compact('class_sections', 'admission_no', 'extraFields', 'sessionYears', 'features'));
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
 
 
         ResponseService::noPermissionThenRedirect(['student-create']);
@@ -101,7 +106,7 @@ class StudentController extends Controller {
             'school_transport'    => 'required|in:van_a,van_b,no',
         ]);
 
-        
+
 
         try {
             DB::beginTransaction();
@@ -126,7 +131,7 @@ class StudentController extends Controller {
                 // If prepaid plan check student limit
                 if ($subscription && $subscription->package_type == 0) {
                     $status = $this->subscriptionService->check_user_limit($subscription, "Students");
-                    
+
                     if (!$status) {
                         ResponseService::errorResponse('You reach out limits');
                     }
@@ -143,22 +148,22 @@ class StudentController extends Controller {
             $userService = app(UserService::class);
             $sessionYear = $this->sessionYear->findById($request->session_year_id);
             $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $request->guardian_image);
-            
-            $result=$userService->createStudentUser($request->first_name, $request->last_name, $request->admission_no, $request->mobile, $request->dob, $request->gender, $request->image, $request->class_section_id, $request->admission_date, $request->current_address, $request->permanent_address, $sessionYear->id, $guardian->id, $request->extra_fields ?? [], $request->status ?? 0,$request->school_transport);
+
+            $result = $userService->createStudentUser($request->first_name, $request->last_name, $request->admission_no, $request->mobile, $request->dob, $request->gender, $request->image, $request->class_section_id, $request->admission_date, $request->current_address, $request->permanent_address, $sessionYear->id, $guardian->id, $request->extra_fields ?? [], $request->status ?? 0, $request->school_transport);
             DB::commit();
             $student = $result['student'];
-            $userService->generateForStudent($student); 
-            
-           
+            $userService->generateForStudent($student);
+
+
             ResponseService::successResponse('Data Stored Successfully');
         } catch (Throwable $e) {
             // IF Exception is TypeError and message contains Mail keywords then email is not sent successfully
             if ($e instanceof TypeError && Str::contains($e->getMessage(), [
-                    'Failed',
-                    'Mail',
-                    'Mailer',
-                    'MailManager'
-                ])) {
+                'Failed',
+                'Mail',
+                'Mailer',
+                'MailManager'
+            ])) {
                 DB::commit();
                 ResponseService::warningResponse("Student Registered successfully. But Email not sent.");
             } else {
@@ -166,11 +171,11 @@ class StudentController extends Controller {
                 ResponseService::logErrorResponse($e, "Student Controller -> Store method");
                 ResponseService::errorResponse();
             }
-
         }
     }
 
-    public function update($id, Request $request) {
+    public function update($id, Request $request)
+    {
         ResponseService::noAnyPermissionThenSendJson(['student-create', 'student-edit']);
         $rules = [
             'first_name'      => 'required',
@@ -180,6 +185,7 @@ class StudentController extends Controller {
             'dob'             => 'required',
             'session_year_id' => 'required|numeric',
             'guardian_email'  => 'required|email|unique:users,email',
+            'school_transport' => 'required',
         ];
         if (is_numeric($request->guardian_id)) {
             $rules['guardian_email'] = 'required|email|unique:users,email,' . $request->guardian_id;
@@ -191,7 +197,22 @@ class StudentController extends Controller {
             $userService = app(UserService::class);
             $sessionYear = $this->sessionYear->findById($request->session_year_id);
             $guardian = $userService->createOrUpdateParent($request->guardian_first_name, $request->guardian_last_name, $request->guardian_email, $request->guardian_mobile, $request->guardian_gender, $request->guardian_image);
-            $userService->updateStudentUser($id, $request->first_name, $request->last_name, $request->mobile, $request->dob, $request->gender, $request->image, $sessionYear->id, $request->extra_fields ?? [], $guardian->id, $request->current_address, $request->permanent_address, $request->reset_password);
+            $userService->updateStudentUser(
+                $id,
+                $request->first_name,
+                $request->last_name,
+                $request->mobile,
+                $request->dob,
+                $request->gender,
+                $request->image,
+                $sessionYear->id,
+                $request->extra_fields ?? [],
+                $guardian->id,
+                $request->current_address,
+                $request->permanent_address,
+                $request->reset_password,
+                $request->school_transport ?? 'no'
+            );
             DB::commit();
             ResponseService::successResponse('Data Updated Successfully');
         } catch (Throwable $e) {
@@ -201,7 +222,8 @@ class StudentController extends Controller {
         }
     }
 
-    public function show(Request $request) {
+    public function show(Request $request)
+    {
         ResponseService::noPermissionThenRedirect('student-list');
         $offset = request('offset', 0);
         $limit = request('limit', 10);
@@ -285,7 +307,7 @@ class StudentController extends Controller {
             $tempRow['no'] = $no++;
             // $tempRow['user.dob'] = format_date($row->user->dob);
             // $tempRow['admission_date'] = format_date($row->admission_date);
-            
+
             $tempRow['extra_fields'] = $row->user->extra_student_details()->has('form_field')->with('form_field')->get();
             $tempRow['operate'] = $operate;
             $rows[] = $tempRow;
@@ -295,7 +317,8 @@ class StudentController extends Controller {
         return response()->json($bulkData);
     }
 
-    public function destroy($user_id) {
+    public function destroy($user_id)
+    {
         ResponseService::noPermissionThenSendJson('student-delete');
         try {
             $this->user->deleteById($user_id);
@@ -307,7 +330,8 @@ class StudentController extends Controller {
         }
     }
 
-    public function changeStatus($userId) {
+    public function changeStatus($userId)
+    {
         try {
             // ResponseService::noFeatureThenSendJson('Student Management');
             ResponseService::noPermissionThenRedirect('student-edit');
@@ -318,13 +342,13 @@ class StudentController extends Controller {
                 // If prepaid plan check student limit
                 if ($subscription && $subscription->package_type == 0) {
                     $status = $this->subscriptionService->check_user_limit($subscription, "Students");
-                    
+
                     if (!$status) {
                         ResponseService::errorResponse('You reach out limits');
                     }
                 }
             }
-                        
+
             $this->user->builder()->where('id', $userId)->withTrashed()->update(['status' => $user->status == 0 ? 1 : 0, 'deleted_at' => $user->status == 1 ? now() : null]);
             DB::commit();
             ResponseService::successResponse('Data Updated Successfully');
@@ -335,7 +359,8 @@ class StudentController extends Controller {
         }
     }
 
-    public function changeStatusBulk(Request $request) {
+    public function changeStatusBulk(Request $request)
+    {
         // ResponseService::noFeatureThenSendJson('Student Management');
         ResponseService::noPermissionThenRedirect('student-create');
         try {
@@ -346,8 +371,8 @@ class StudentController extends Controller {
                     $subscription = $this->subscriptionService->active_subscription(Auth::user()->school_id);
                     // If prepaid plan check student limit
                     if ($subscription && $subscription->package_type == 0) {
-                        $status = $this->subscriptionService->check_user_limit($subscription,"Students");
-                        
+                        $status = $this->subscriptionService->check_user_limit($subscription, "Students");
+
                         if (!$status) {
                             ResponseService::errorResponse('You reach out limits');
                         }
@@ -364,7 +389,8 @@ class StudentController extends Controller {
         }
     }
 
-    public function trash($id) {
+    public function trash($id)
+    {
         // ResponseService::noFeatureThenSendJson('Student Management');
         ResponseService::noPermissionThenSendJson('student-delete');
         try {
@@ -376,14 +402,16 @@ class StudentController extends Controller {
         }
     }
 
-    public function createBulkData() {
+    public function createBulkData()
+    {
         ResponseService::noPermissionThenRedirect('student-create');
         $class_section = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
         $sessionYears = $this->sessionYear->all();
         return view('students.add_bulk_data', compact('class_section', 'sessionYears'));
     }
 
-    public function storeBulkData(Request $request) {
+    public function storeBulkData(Request $request)
+    {
         ResponseService::noPermissionThenRedirect('student-create');
         $validator = Validator::make($request->all(), [
             'session_year_id'  => 'required|numeric',
@@ -404,12 +432,14 @@ class StudentController extends Controller {
         }
     }
 
-    public function resetPasswordIndex() {
+    public function resetPasswordIndex()
+    {
         $class_section = $this->classSection->builder()->with('class', 'class.stream', 'section')->get();
         return view('students.reset-password', compact('class_section'));
     }
 
-    public function resetPasswordShow() {
+    public function resetPasswordShow()
+    {
         ResponseService::noPermissionThenRedirect('reset-password-list');
         $offset = request('offset', 0);
         $limit = request('limit', 10);
@@ -448,7 +478,8 @@ class StudentController extends Controller {
         return response()->json($bulkData);
     }
 
-    public function resetPasswordUpdate(Request $request) {
+    public function resetPasswordUpdate(Request $request)
+    {
         ResponseService::noPermissionThenRedirect('student-change-password');
         try {
             DB::beginTransaction();
@@ -465,14 +496,16 @@ class StudentController extends Controller {
         }
     }
 
-    public function rollNumberIndex() {
+    public function rollNumberIndex()
+    {
         ResponseService::noPermissionThenRedirect('student-create');
         $class_section = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
 
         return view('students.assign_roll_no', compact('class_section'));
     }
 
-    public function rollNumberUpdate(Request $request) {
+    public function rollNumberUpdate(Request $request)
+    {
         ResponseService::noPermissionThenRedirect('student-create');
         $validator = Validator::make(
             $request->all(),
@@ -511,7 +544,8 @@ class StudentController extends Controller {
         }
     }
 
-    public function rollNumberShow(Request $request) {
+    public function rollNumberShow(Request $request)
+    {
         ResponseService::noPermissionThenRedirect('student-create');
         try {
             ResponseService::noPermissionThenRedirect('student-list');
@@ -588,7 +622,8 @@ class StudentController extends Controller {
         }
     }
 
-    public function downloadSampleFile() {
+    public function downloadSampleFile()
+    {
         try {
             return Excel::download(new StudentDataExport(), 'import.xlsx');
         } catch (Throwable $e) {
@@ -600,10 +635,9 @@ class StudentController extends Controller {
     public function update_profile()
     {
         ResponseService::noPermissionThenRedirect('student-edit');
-        
+
         $class_sections = $this->classSection->all(['*'], ['class', 'class.stream', 'section', 'medium']);
-        return view('students.add_bulk_profile',compact('class_sections'));
-        
+        return view('students.add_bulk_profile', compact('class_sections'));
     }
 
     public function list($id = null, Request $request)
@@ -642,13 +676,13 @@ class StudentController extends Controller {
             $sql = $sql->orderBy('roll_number', 'ASC');
             $res = $sql->get();
         }
-        
+
         $bulkData = array();
         $bulkData['total'] = $total;
         $rows = array();
         $no = 1;
         foreach ($res as $row) {
-            
+
             $tempRow = $row->toArray();
             $tempRow['no'] = $no++;
             $rows[] = $tempRow;
@@ -656,7 +690,6 @@ class StudentController extends Controller {
 
         $bulkData['rows'] = $rows;
         return response()->json($bulkData);
-
     }
 
     public function store_update_profile(Request $request)
@@ -669,7 +702,7 @@ class StudentController extends Controller {
                 foreach ($request->student_image as $key => $profile) {
                     $data[] = [
                         'id' => $key,
-                        'image' => $profile->store('user','public')
+                        'image' => $profile->store('user', 'public')
                     ];
                 }
             }
@@ -677,20 +710,20 @@ class StudentController extends Controller {
                 foreach ($request->guardian_image as $key => $profile) {
                     $data[] = [
                         'id' => $key,
-                        'image' => $profile->store('user','public')
+                        'image' => $profile->store('user', 'public')
                     ];
                 }
             }
-            $this->user->upsert($data,['id'],['image']);
+            $this->user->upsert($data, ['id'], ['image']);
             ResponseService::successResponse('Profile Updated Successfully');
-            
         } catch (\Throwable $th) {
             ResponseService::logErrorResponse($th);
             ResponseService::errorResponse();
         }
     }
 
-    public function generate_id_card_index() {
+    public function generate_id_card_index()
+    {
         ResponseService::noFeatureThenRedirect('ID Card - Certificate Generation');
         ResponseService::noAnyPermissionThenRedirect(['student-list', 'class-teacher']);
 
@@ -700,7 +733,8 @@ class StudentController extends Controller {
         return view('students.generate_id_card', compact('class_sections', 'sessionYears'));
     }
 
-    public function generate_id_card(Request $request) {
+    public function generate_id_card(Request $request)
+    {
         ResponseService::noFeatureThenRedirect('ID Card - Certificate Generation');
         ResponseService::noAnyPermissionThenRedirect(['student-list', 'class-teacher']);
         $request->validate([
@@ -709,13 +743,13 @@ class StudentController extends Controller {
             'user_id.required' => trans('Please select at least one record')
         ]);
         try {
-            $user_ids = explode(",",$request->user_id);
+            $user_ids = explode(",", $request->user_id);
             $settings = $this->cache->getSchoolSettings();
             if (!isset($settings['student_id_card_fields'])) {
-                return redirect()->route('student.id-card-settings')->with('error',trans('settings_not_found'));
+                return redirect()->route('student.id-card-settings')->with('error', trans('settings_not_found'));
             }
 
-            $settings['student_id_card_fields'] = explode(",",$settings['student_id_card_fields']);
+            $settings['student_id_card_fields'] = explode(",", $settings['student_id_card_fields']);
 
             $data = explode("storage/", $settings['signature'] ?? '');
             $settings['signature'] = end($data);
@@ -727,20 +761,20 @@ class StudentController extends Controller {
             $settings['horizontal_logo'] = end($data);
 
             $sessionYear = $this->cache->getDefaultSessionYear();
-            $valid_until = date('F j, Y',strtotime($sessionYear->end_date));
+            $valid_until = date('F j, Y', strtotime($sessionYear->end_date));
             $height = $settings['page_height'] * 2.8346456693;
             $width = $settings['page_width'] * 2.8346456693;
             // $customPaper = array(0,0,360,200);
-            $customPaper = array(0,0,$width,$height);
-            $students = $this->user->builder()->select('id','first_name','last_name','image','school_id','gender','dob')->with('student:id,user_id,class_section_id,school_id,guardian_id,roll_number','student.class_section.class','student.class_section.section','student.class_section.medium','student.class_section.class.stream','student.guardian:id,mobile,first_name,last_name')->whereHas('student',function($q) use($user_ids) {
-                $q->whereIn('id',$user_ids);
+            $customPaper = array(0, 0, $width, $height);
+            $students = $this->user->builder()->select('id', 'first_name', 'last_name', 'image', 'school_id', 'gender', 'dob')->with('student:id,user_id,class_section_id,school_id,guardian_id,roll_number', 'student.class_section.class', 'student.class_section.section', 'student.class_section.medium', 'student.class_section.class.stream', 'student.guardian:id,mobile,first_name,last_name')->whereHas('student', function ($q) use ($user_ids) {
+                $q->whereIn('id', $user_ids);
             })->get();
-            $settings['page_height'] = ($settings['page_height'] * 3.7795275591).'px';
+            $settings['page_height'] = ($settings['page_height'] * 3.7795275591) . 'px';
 
-            $pdf = PDF::loadView('students.students_id_card',compact('students','sessionYear','valid_until','settings'));
+            $pdf = PDF::loadView('students.students_id_card', compact('students', 'sessionYear', 'valid_until', 'settings'));
             $pdf->setPaper($customPaper);
 
-            
+
             return $pdf->stream();
             return view('students.id_card_pdf');
         } catch (\Throwable $th) {
@@ -754,9 +788,9 @@ class StudentController extends Controller {
         ResponseService::noFeatureThenRedirect('ID Card - Certificate Generation');
         ResponseService::noPermissionThenRedirect('student-id-card-settings');
         $settings = $this->cache->getSchoolSettings();
-        $settings['student_id_card_fields'] = explode(",",$settings['student_id_card_fields'] ?? '');
+        $settings['student_id_card_fields'] = explode(",", $settings['student_id_card_fields'] ?? '');
 
-        return view('students.id_card_settings',compact('settings'));
+        return view('students.id_card_settings', compact('settings'));
     }
 
     public function id_card_store(Request $request)
@@ -776,14 +810,14 @@ class StudentController extends Controller {
             'student_id_card_fields'    => 'nullable',
         ];
         $validator = Validator::make($request->all(), $settings);
-        
+
         if ($validator->fails()) {
             ResponseService::validationError($validator->errors()->first());
         }
 
         $request->validate([
             'student_id_card_fields' => 'required'
-        ],[
+        ], [
             'student_id_card_fields.required' => 'Please select at least one field.'
         ]);
 
@@ -800,14 +834,13 @@ class StudentController extends Controller {
                             "type" => "file"
                         ];
                     }
-                } else if($key == 'student_id_card_fields') {
-                    $key_value = implode(",",$request->student_id_card_fields);
+                } else if ($key == 'student_id_card_fields') {
+                    $key_value = implode(",", $request->student_id_card_fields);
                     $data[] = [
                         "name" => $key,
                         "data" => $key_value,
                         "type" => "string"
                     ];
-
                 } else {
                     $data[] = [
                         "name" => $key,
@@ -834,9 +867,9 @@ class StudentController extends Controller {
         try {
             DB::beginTransaction();
             if ($type == 'background') {
-                $this->schoolSettings->builder()->where('name','background_image')->delete();
+                $this->schoolSettings->builder()->where('name', 'background_image')->delete();
             } else {
-                $this->schoolSettings->builder()->where('name','signature')->delete();
+                $this->schoolSettings->builder()->where('name', 'signature')->delete();
             }
             DB::commit();
             $this->cache->removeSchoolCache(config('constants.CACHE.SCHOOL.SETTINGS'));
@@ -847,28 +880,26 @@ class StudentController extends Controller {
         }
     }
 
-public function getStudentsByClass($classId)
-{
-    $students = Students::with('user')
-        ->whereHas('class_section', function ($query) use ($classId) {
-            $query->where('class_id', $classId);
-        })
-        ->get()
-        ->map(function ($student) {
+    public function getStudentsByClass($classId)
+    {
+        $students = Students::with('user')
+            ->whereHas('class_section', function ($query) use ($classId) {
+                $query->where('class_id', $classId);
+            })
+            ->get()
+            ->map(function ($student) {
 
-            return [
-                'id' => $student->id,
-                'admission_no' => $student->admission_no,
-                'name' => trim(
-                    ($student->user->first_name ?? '') . ' ' .
-                    ($student->user->last_name ?? '')
-                ),
-                'school_transport' => $student->school_transport, // <-- Added
-            ];
-        });
+                return [
+                    'id' => $student->id,
+                    'admission_no' => $student->admission_no,
+                    'name' => trim(
+                        ($student->user->first_name ?? '') . ' ' .
+                            ($student->user->last_name ?? '')
+                    ),
+                    'school_transport' => $student->school_transport, // <-- Added
+                ];
+            });
 
-    return response()->json($students);
+        return response()->json($students);
+    }
 }
-
-}
-

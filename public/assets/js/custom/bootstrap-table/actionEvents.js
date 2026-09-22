@@ -167,84 +167,443 @@ window.guardianEvents = {
 };
 
 window.studentEvents = {
-    'click .edit-data': function (e, value, row) {
-        $('#edit_first_name').val(row.user.first_name);
-        $('#edit_last_name').val(row.user.last_name);
-        $('#edit_mobile').val(row.user.mobile);
-        $('#edit_dob').val(moment(row.user.dob, 'YYYY-MM-DD').format('DD-MM-YYYY'));
-        $('#session_year_id').val(row.session_year_id);
-        $('#edit_admission_no').val(row.admission_no);
-        $('#edit-student-image-tag').attr('src', row.user.image);
-        $('#edit-current-address').val(row.user.current_address);
-        $('#edit-permanent-address').val(row.user.permanent_address);
 
-        if (row.user.gender == 'male') {
-            $(document).find('#female').prop('checked', false);
-            $(document).find('#male').prop('checked', true);
+    'click .edit-data': function (e, value, row) {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Safely get related objects
+        |--------------------------------------------------------------------------
+        */
+
+        const user = row.user || {};
+        const guardian = row.guardian || {};
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Basic Information
+        |--------------------------------------------------------------------------
+        */
+
+        $('#edit_first_name').val(user.first_name || '');
+        $('#edit_last_name').val(user.last_name || '');
+        $('#edit_mobile').val(user.mobile || '');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Date of Birth
+        |--------------------------------------------------------------------------
+        */
+
+        if (user.dob) {
+            $('#edit_dob').val(
+                moment(user.dob, 'YYYY-MM-DD').format('DD-MM-YYYY')
+            );
         } else {
-            $(document).find('#male').prop('checked', false);
-            $(document).find('#female').prop('checked', true);
+            $('#edit_dob').val('');
         }
 
-        setTimeout(() => {
+        /*
+        |--------------------------------------------------------------------------
+        | Admission Number
+        |--------------------------------------------------------------------------
+        */
 
-            // Fill the Extra Field's Data
-            if (row.extra_fields.length) {
-                $.each(row.extra_fields, function (index, value) {
+        $('#edit_admission_no').val(row.admission_no || '');
 
-                    let fieldName = $.escapeSelector(value.form_field.name.replace(/ /g, '_'));
+        /*
+        |--------------------------------------------------------------------------
+        | Session Year
+        |
+        | IMPORTANT:
+        | Keep #session_year_id because this is the original ID used by
+        | the existing edit form / JavaScript.
+        |--------------------------------------------------------------------------
+        */
 
-                    $(`#${fieldName}_id`).val(value.id);
-                    if (value.form_field.default_values && value.form_field.default_values.length) {
-                        $.each(value.form_field.default_values, function (key) {
-                            if (typeof (value.data) == 'object') {
-                                $.each(value.data, function (dataKey, dataValue) {
-                                    let checked = ($('#' + fieldName + '_' + dataKey).val() == dataValue);
-                                    $('#' + fieldName + '_' + dataKey).prop('checked', checked);
-                                });
-                            } else if (value.form_field.type == 'dropdown') {
-                                $('#' + fieldName).val(value.data);
-                            } else {
-                                $('#' + fieldName + '_' + key).prop('checked', false);
-                                // Check data is json format or not
-                                if (isJSON(value.data)) { // Checkbox
-                                    let chkArray = JSON.parse(value.data);
-                                    $.each(chkArray, function (chkKey, chkValue) {
-                                        if ($('#' + fieldName + '_' + key).val() == chkValue) {
-                                            $('#' + fieldName + '_' + key).prop('checked', true);
+        $('#session_year_id')
+            .val(row.session_year_id || '')
+            .trigger('change');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Class / Section
+        |
+        | IMPORTANT:
+        | Keep #edit_class_section.
+        |--------------------------------------------------------------------------
+        */
+
+        let classSectionId = '';
+
+        if (row.class_section_id) {
+            classSectionId = row.class_section_id;
+        } else if (row.class_section && row.class_section.id) {
+            classSectionId = row.class_section.id;
+        } else if (
+            row.class_section &&
+            row.class_section.class_section_id
+        ) {
+            classSectionId = row.class_section.class_section_id;
+        }
+
+        $('#edit_class_section')
+            .val(classSectionId)
+            .trigger('change');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Admission Date
+        |--------------------------------------------------------------------------
+        */
+
+        if (row.admission_date) {
+            $('#edit_admission_date').val(
+                moment(row.admission_date, 'YYYY-MM-DD').format('DD-MM-YYYY')
+            );
+        } else {
+            $('#edit_admission_date').val('');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Status
+        |--------------------------------------------------------------------------
+        */
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Status
+        |--------------------------------------------------------------------------
+        */
+
+        const studentStatus = row.status ?? user.status ?? '';
+
+        // Clear both first
+        $('#edit_status_active').prop('checked', false);
+        $('#edit_status_inactive').prop('checked', false);
+
+        // Convert the value to a consistent format
+        const normalizedStatus = String(studentStatus).toLowerCase();
+
+        if (
+            normalizedStatus === 'active' ||
+            normalizedStatus === '1' ||
+            normalizedStatus === 'true'
+        ) {
+
+            $('#edit_status_active')
+                .prop('checked', true);
+
+        } else if (
+            normalizedStatus === 'inactive' ||
+            normalizedStatus === '0' ||
+            normalizedStatus === 'false'
+        ) {
+
+            $('#edit_status_inactive')
+                .prop('checked', true);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | School Transport
+        |--------------------------------------------------------------------------
+        */
+
+        $('#edit_school_transport')
+            .val(row.school_transport || 'no')
+            .trigger('change');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Image
+        |--------------------------------------------------------------------------
+        */
+
+        if (user.image) {
+            $('#edit-student-image-tag')
+                .attr('src', user.image)
+                .removeClass('d-none');
+        } else {
+            $('#edit-student-image-tag')
+                .attr('src', '')
+                .addClass('d-none');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Addresses
+        |--------------------------------------------------------------------------
+        */
+
+        $('#edit-current-address').val(
+            user.current_address || ''
+        );
+
+        $('#edit-permanent-address').val(
+            user.permanent_address || ''
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Student Gender
+        |
+        | IMPORTANT:
+        | Keep the original IDs #male and #female.
+        |--------------------------------------------------------------------------
+        */
+
+        $('#male').prop('checked', false);
+        $('#female').prop('checked', false);
+
+        if (user.gender === 'male') {
+            $('#male').prop('checked', true);
+        } else if (user.gender === 'female') {
+            $('#female').prop('checked', true);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Extra Fields
+        |--------------------------------------------------------------------------
+        */
+
+        setTimeout(function () {
+
+            if (row.extra_fields && row.extra_fields.length) {
+
+                $.each(row.extra_fields, function (index, fieldValue) {
+
+                    if (!fieldValue.form_field) {
+                        return;
+                    }
+
+                    let fieldName = $.escapeSelector(
+                        fieldValue.form_field.name.replace(/ /g, '_')
+                    );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Save Extra Field Record ID
+                    |--------------------------------------------------------------------------
+                    */
+
+                    $('#' + fieldName + '_id').val(
+                        fieldValue.id || ''
+                    );
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Fields With Default Values
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (
+                        fieldValue.form_field.default_values &&
+                        fieldValue.form_field.default_values.length
+                    ) {
+
+                        $.each(
+                            fieldValue.form_field.default_values,
+                            function (key) {
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Object Data
+                                |--------------------------------------------------------------------------
+                                */
+
+                                if (
+                                    typeof fieldValue.data === 'object' &&
+                                    fieldValue.data !== null
+                                ) {
+
+                                    $.each(
+                                        fieldValue.data,
+                                        function (dataKey, dataValue) {
+
+                                            let checked = (
+                                                $('#' + fieldName + '_' + dataKey).val()
+                                                == dataValue
+                                            );
+
+                                            $('#' + fieldName + '_' + dataKey)
+                                                .prop('checked', checked);
                                         }
-                                    })
-                                } else {
-                                    // Radio buttons
-                                    let checked = ($('#' + fieldName + '_' + key).val() == value.data);
-                                    $('#' + fieldName + '_' + key).prop('checked', checked);
+                                    );
+
+                                }
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Dropdown
+                                |--------------------------------------------------------------------------
+                                */
+
+                                else if (
+                                    fieldValue.form_field.type === 'dropdown'
+                                ) {
+
+                                    $('#' + fieldName)
+                                        .val(fieldValue.data)
+                                        .trigger('change');
+
+                                }
+
+                                /*
+                                |--------------------------------------------------------------------------
+                                | Radio / Checkbox
+                                |--------------------------------------------------------------------------
+                                */
+
+                                else {
+
+                                    $('#' + fieldName + '_' + key)
+                                        .prop('checked', false);
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | Checkbox JSON Data
+                                    |--------------------------------------------------------------------------
+                                    */
+
+                                    if (isJSON(fieldValue.data)) {
+
+                                        let chkArray =
+                                            JSON.parse(fieldValue.data);
+
+                                        $.each(
+                                            chkArray,
+                                            function (chkKey, chkValue) {
+
+                                                if (
+                                                    $('#' + fieldName + '_' + key).val()
+                                                    == chkValue
+                                                ) {
+
+                                                    $('#' + fieldName + '_' + key)
+                                                        .prop('checked', true);
+                                                }
+                                            }
+                                        );
+
+                                    }
+
+                                    /*
+                                    |--------------------------------------------------------------------------
+                                    | Radio Data
+                                    |--------------------------------------------------------------------------
+                                    */
+
+                                    else {
+
+                                        let checked = (
+                                            $('#' + fieldName + '_' + key).val()
+                                            == fieldValue.data
+                                        );
+
+                                        $('#' + fieldName + '_' + key)
+                                            .prop('checked', checked);
+                                    }
                                 }
                             }
-                        });
-                    } else {
-                        if (value.form_field.type == 'file') {
-                            if (value.data) {
-                                $('#file_div_' + fieldName).removeClass('d-none').find('#file_link_' + fieldName).attr('href', value.file_url);
+                        );
+
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Fields Without Default Values
+                    |--------------------------------------------------------------------------
+                    */
+
+                    else {
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | File
+                        |--------------------------------------------------------------------------
+                        */
+
+                        if (fieldValue.form_field.type === 'file') {
+
+                            if (fieldValue.data) {
+
+                                $('#file_div_' + fieldName)
+                                    .removeClass('d-none')
+                                    .find('#file_link_' + fieldName)
+                                    .attr('href', fieldValue.file_url);
+
                             } else {
-                                $('#file_div_' + fieldName).addClass("d-none").find('#file_link_' + fieldName).attr('href', "");
+
+                                $('#file_div_' + fieldName)
+                                    .addClass('d-none')
+                                    .find('#file_link_' + fieldName)
+                                    .attr('href', '');
                             }
-                        } else {
-                            $('#' + fieldName).val(value.data);
+
+                        }
+
+                        /*
+                        |--------------------------------------------------------------------------
+                        | Normal Field
+                        |--------------------------------------------------------------------------
+                        */
+
+                        else {
+
+                            $('#' + fieldName)
+                                .val(fieldValue.data || '');
                         }
                     }
                 });
-            } else {
-                $('.text-fields').val('');
-                $('.number-fields').val('');
-                $('.select-fields').val('');
-                $('.radio-fields').prop('checked', false);
-                $('.checkbox-fields').prop('checked', false);
-                $('.textarea-fields').val('');
-                $('.file-div').addClass('d-none');
+
             }
-        }, 1000);
+
+            /*
+            |--------------------------------------------------------------------------
+            | No Extra Fields
+            |--------------------------------------------------------------------------
+            */
+
+            else {
+
+                $('.text-fields').val('');
+
+                $('.number-fields').val('');
+
+                $('.select-fields')
+                    .val('')
+                    .trigger('change');
+
+                $('.radio-fields')
+                    .prop('checked', false);
+
+                $('.checkbox-fields')
+                    .prop('checked', false);
+
+                $('.textarea-fields')
+                    .val('');
+
+                $('.file-div')
+                    .addClass('d-none');
+            }
+
+        }, 500);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Check Whether Value Is JSON
+        |--------------------------------------------------------------------------
+        */
 
         function isJSON(data) {
+
+            if (typeof data !== 'string') {
+                return false;
+            }
+
             try {
                 JSON.parse(data);
                 return true;
@@ -253,52 +612,184 @@ window.studentEvents = {
             }
         }
 
-        // Guardian Data
-        $(".edit-guardian-search").select2("trigger", "select", {
-            data: {
-                id: row.guardian_id || "",
-                text: row.guardian.email || "",
-                edit_data: true,
-            }
-        });
+        /*
+        |--------------------------------------------------------------------------
+        | Guardian Search / Select2
+        |--------------------------------------------------------------------------
+        */
 
-        //Adding delay to fill data so that select2 code and this code don't conflict each other
+        if (row.guardian_id && guardian.email) {
+
+            $('.edit-guardian-search').select2(
+                'trigger',
+                'select',
+                {
+                    data: {
+                        id: row.guardian_id,
+                        text: guardian.email,
+                        edit_data: true
+                    }
+                }
+            );
+
+        } else {
+
+            $('.edit-guardian-search')
+                .val('')
+                .trigger('change');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Guardian Details
+        |--------------------------------------------------------------------------
+        */
+
         setTimeout(function () {
-            $('#edit_guardian_first_name').val(row.guardian.first_name);
-            $('#edit_guardian_last_name').val(row.guardian.last_name);
-            $('#edit_guardian_mobile').val(row.guardian.mobile);
-            $('#edit-guardian-image-tag').attr('src', row.guardian.image);
+
+            if (guardian && row.guardian_id) {
+
+                $('#edit_guardian_first_name').val(
+                    guardian.first_name || ''
+                );
+
+                $('#edit_guardian_last_name').val(
+                    guardian.last_name || ''
+                );
+
+                $('#edit_guardian_mobile').val(
+                    guardian.mobile || ''
+                );
+
+                /*
+                |--------------------------------------------------------------------------
+                | Guardian Image
+                |--------------------------------------------------------------------------
+                */
+
+                if (guardian.image) {
+
+                    $('#edit-guardian-image-tag')
+                        .attr('src', guardian.image)
+                        .removeClass('d-none');
+
+                } else {
+
+                    $('#edit-guardian-image-tag')
+                        .attr('src', '')
+                        .addClass('d-none');
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Guardian Gender
+                |--------------------------------------------------------------------------
+                */
+
+                $('#edit-guardian-male').prop('checked', false);
+                $('#edit-guardian-female').prop('checked', false);
+
+                if (guardian.gender === 'male') {
+
+                    $('#edit-guardian-male')
+                        .prop('checked', true);
+
+                } else if (guardian.gender === 'female') {
+
+                    $('#edit-guardian-female')
+                        .prop('checked', true);
+                }
+
+            } else {
+
+                /*
+                |--------------------------------------------------------------------------
+                | Clear Guardian Fields
+                |--------------------------------------------------------------------------
+                */
+
+                $('#edit_guardian_first_name').val('');
+                $('#edit_guardian_last_name').val('');
+                $('#edit_guardian_mobile').val('');
+
+                $('#edit-guardian-male')
+                    .prop('checked', false);
+
+                $('#edit-guardian-female')
+                    .prop('checked', false);
+
+                $('#edit-guardian-image-tag')
+                    .attr('src', '')
+                    .addClass('d-none');
+            }
 
         }, 500);
-        if (row.guardian.gender == 'male') {
-            $(document).find('#edit-guardian-female').prop('checked', false);
-            $(document).find('#edit-guardian-male').prop('checked', true);
-        } else {
-            $(document).find('#edit-guardian-male').prop('checked', false);
-            $(document).find('#edit-guardian-female').prop('checked', true);
-        }
-    }, 'click .deactivate-student': function (e) {
+    },
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deactivate Student
+    |--------------------------------------------------------------------------
+    */
+
+    'click .deactivate-student': function (e) {
+
         e.preventDefault();
-        showDeletePopupModal($(e.currentTarget).attr('href'), {
-            text: window.trans["You want to inactive the Student"],
-            confirmButtonText: window.trans["Yes inactive"],
-            cancelButtonText: window.trans["Cancel"],
-            icon: 'question',
-            successCallBack: function () {
-                $('#table_list').bootstrapTable('refresh');
+
+        showDeletePopupModal(
+            $(e.currentTarget).attr('href'),
+            {
+                text: window.trans["You want to inactive the Student"],
+
+                confirmButtonText:
+                    window.trans["Yes inactive"],
+
+                cancelButtonText:
+                    window.trans["Cancel"],
+
+                icon: 'question',
+
+                successCallBack: function () {
+
+                    $('#table_list')
+                        .bootstrapTable('refresh');
+                }
             }
-        })
-    }, 'click .activate-student': function (e) {
+        );
+    },
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Activate Student
+    |--------------------------------------------------------------------------
+    */
+
+    'click .activate-student': function (e) {
+
         e.preventDefault();
-        showDeletePopupModal($(e.currentTarget).attr('href'), {
-            text: window.trans["You want to Activate the Student"],
-            confirmButtonText: window.trans["Yes Activate"],
-            cancelButtonText: window.trans["Cancel"],
-            icon: 'question',
-            successCallBack: function () {
-                $('#table_list').bootstrapTable('refresh');
+
+        showDeletePopupModal(
+            $(e.currentTarget).attr('href'),
+            {
+                text: window.trans["You want to Activate the Student"],
+
+                confirmButtonText:
+                    window.trans["Yes Activate"],
+
+                cancelButtonText:
+                    window.trans["Cancel"],
+
+                icon: 'question',
+
+                successCallBack: function () {
+
+                    $('#table_list')
+                        .bootstrapTable('refresh');
+                }
             }
-        })
+        );
     }
 };
 

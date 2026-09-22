@@ -684,7 +684,7 @@ display:none !important;
 
     <div class="d-flex justify-content-end gap-2">
 
-        <button type="button"
+        {{-- <button type="button"
                 onclick="window.print()"
                 class="btn btn-success">
 
@@ -692,7 +692,7 @@ display:none !important;
 
             Print
 
-        </button>
+        </button> --}}
 
         <button type="button"
                 onclick="downloadPDF()"
@@ -700,7 +700,7 @@ display:none !important;
 
             <i class="fa fa-file-pdf-o"></i>
 
-            PDF
+            Generate PDF
 
         </button>
 
@@ -777,6 +777,8 @@ display:none !important;
         'partial'   => 'badge-partial',
         default     => 'badge-unpaid',
     };
+
+    
 
 @endphp
 
@@ -990,9 +992,9 @@ display:none !important;
 
                         $payment->transaction_type='payment';
 
-                        $payment->transaction_date=
-                            $payment->payment_date ??
-                            $payment->created_at;
+                        $payment->transaction_date = $payment->payment_date
+    ? \Carbon\Carbon::parse($payment->payment_date)
+    : $payment->created_at;
 
                         return $payment;
 
@@ -1006,8 +1008,7 @@ display:none !important;
 
                         $credit->transaction_type='credit';
 
-                        $credit->transaction_date=
-                            $credit->created_at;
+                        $credit->transaction_date = \Carbon\Carbon::parse($credit->created_at);
 
                         return $credit;
 

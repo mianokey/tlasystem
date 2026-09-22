@@ -13,59 +13,59 @@
         </div>
 
         <div class="row">
-            {{--            <div class="col-lg-12 grid-margin stretch-card">--}}
+                       <div class="col-lg-12 grid-margin stretch-card">
             {{--                <div class="card">--}}
-            {{--                    <div class="card-body">--}}
-            {{--                        <h4 class="card-title">--}}
-            {{--                            {{ __('create').' '.__('Guardian') }}--}}
-            {{--                        </h4>--}}
-            {{--                        <form class="create-form pt-3 create-guardian-form" id="formdata" action="{{route('guardian.store')}}" enctype="multipart/form-data" method="POST" novalidate="novalidate">--}}
-            {{--                            @csrf--}}
-            {{--                            <div class="row">--}}
-            {{--                                <div class="form-group col-sm-12 col-md-6">--}}
-            {{--                                    <label>{{ __('first_name') }} <span class="text-danger">*</span></label>--}}
-            {{--                                    {!! Form::text('first_name', null, ['required', 'placeholder' => __('first_name'), 'class' => 'form-control']) !!}--}}
+                                <div class="card-body">--}}
+                                    <h4 class="card-title">--}}
+                                        {{ __('create').' '.__('Guardian') }}--}}
+                                    </h4>--}}
+                                    <form class="create-form pt-3 create-guardian-form" id="formdata" action="{{route('guardian.store')}}" enctype="multipart/form-data" method="POST" novalidate="novalidate">--}}
+                                        @csrf--}}
+                                        <div class="row">--}}
+                                            <div class="form-group col-sm-12 col-md-6">--}}
+                                                <label>{{ __('first_name') }} <span class="text-danger">*</span></label>--}}
+                                                {!! Form::text('first_name', null, ['required', 'placeholder' => __('first_name'), 'class' => 'form-control']) !!}--}}
 
-            {{--                                </div>--}}
-            {{--                                <div class="form-group col-sm-12 col-md-6">--}}
-            {{--                                    <label>{{ __('last_name') }} <span class="text-danger">*</span></label>--}}
-            {{--                                    {!! Form::text('last_name', null, ['required', 'placeholder' => __('last_name'), 'class' => 'form-control']) !!}--}}
-            {{--                                </div>--}}
+                                            </div>--}}
+                                            <div class="form-group col-sm-12 col-md-6">--}}
+                                                <label>{{ __('last_name') }} <span class="text-danger">*</span></label>--}}
+                                                {!! Form::text('last_name', null, ['required', 'placeholder' => __('last_name'), 'class' => 'form-control']) !!}--}}
+                                            </div>--}}
 
-            {{--                                <div class="form-group col-sm-12 col-md-6">--}}
-            {{--                                    <label>{{ __('email') }} <span class="text-danger">*</span></label>--}}
-            {{--                                    {!! Form::text('email', null, ['required', 'placeholder' => __('email'), 'class' => 'form-control']) !!}--}}
-            {{--                                </div>--}}
+                                            <div class="form-group col-sm-12 col-md-6">--}}
+                                                <label>{{ __('email') }} <span class="text-danger">*</span></label>--}}
+                                                {!! Form::text('email', null, ['required', 'placeholder' => __('email'), 'class' => 'form-control']) !!}--}}
+                                            </div>--}}
 
 
-            {{--                                <div class="form-group col-sm-12 col-md-6">--}}
-            {{--                                    <label>{{ __('mobile') }} <span class="text-danger">*</span></label>--}}
-            {{--                                    {!! Form::number('mobile', null, ['required', 'placeholder' => __('mobile'), 'class' => 'form-control']) !!}--}}
-            {{--                                </div>--}}
-            {{--                                <div class="form-group col-sm-12 col-md-3">--}}
-            {{--                                    <label>{{ __('gender') }} <span class="text-danger">*</span></label><br>--}}
-            {{--                                    <div class="d-flex">--}}
-            {{--                                        <div class="form-check form-check-inline">--}}
-            {{--                                            <label class="form-check-label">--}}
-            {{--                                                {!! Form::radio('gender', 'male',true,  ['class' => 'form-check-input']) !!}--}}
-            {{--                                                {{ __('male') }}--}}
-            {{--                                            </label>--}}
-            {{--                                        </div>--}}
-            {{--                                        <div class="form-check form-check-inline">--}}
-            {{--                                            <label class="form-check-label">--}}
-            {{--                                                {!! Form::radio('gender', 'female',false, ['class' => 'form-check-input']) !!}--}}
-            {{--                                                {{ __('female') }}--}}
-            {{--                                            </label>--}}
-            {{--                                        </div>--}}
-            {{--                                    </div>--}}
-            {{--                                </div>--}}
+                                            <div class="form-group col-sm-12 col-md-6">--}}
+                                                <label>{{ __('mobile') }} <span class="text-danger">*</span></label>--}}
+                                                {!! Form::number('mobile', null, ['required', 'placeholder' => __('mobile'), 'class' => 'form-control']) !!}--}}
+                                            </div>--}}
+                                            <div class="form-group col-sm-12 col-md-3">--}}
+                                                <label>{{ __('gender') }} <span class="text-danger">*</span></label><br>--}}
+                                                <div class="d-flex">--}}
+                                                    <div class="form-check form-check-inline">--}}
+                                                        <label class="form-check-label">--}}
+                                                            {!! Form::radio('gender', 'male',true,  ['class' => 'form-check-input']) !!}--}}
+                                                            {{ __('male') }}--}}
+                                                        </label>--}}
+                                                    </div>--}}
+                                                    <div class="form-check form-check-inline">--}}
+                                                        <label class="form-check-label">--}}
+                                                            {!! Form::radio('gender', 'female',false, ['class' => 'form-check-input']) !!}--}}
+                                                            {{ __('female') }}--}}
+                                                        </label>--}}
+                                                    </div>--}}
+                                                </div>--}}
+                                            </div>--}}
 
-            {{--                            </div>--}}
-            {{--                            <input class="btn btn-theme" type="submit" value={{ __('submit') }}>--}}
-            {{--                        </form>--}}
-            {{--                    </div>--}}
-            {{--                </div>--}}
-            {{--            </div>--}}
+                                        </div>--}}
+                                        <input class="btn btn-theme" type="submit" value={{ __('submit') }}>--}}
+                                    </form>--}}
+                                </div>--}}
+                            </div>--}}
+                        </div> --}}
             <div class="col-lg-12 grid-margin stretch-card">
                 <div class="card">
                     <div class="card-body">
